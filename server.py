@@ -45,7 +45,7 @@ from zhipuai import ZhipuAI
 # 配置
 # ────────────────────────────────────────
 API_KEY = "df38ea4eb1584fabb0851837b55d1910.u4nwnhBu7526QS4e"
-MODEL   = "glm-4-flash"
+MODEL   = "glm-4.7-flash"
 
 BASE_DIR   = Path(__file__).parent
 UPLOAD_DIR = BASE_DIR / "uploads"
