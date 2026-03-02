@@ -56,8 +56,11 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # 注册中文 CID 字体（reportlab 内置，无需额外字体文件）
-pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
-CH_FONT = "STSong-Light"
+try:
+    pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
+    CH_FONT = "STSong-Light"
+except Exception:
+    CH_FONT = "Helvetica"  # Render 环境回退字体
 
 # ────────────────────────────────────────
 # FastAPI 应用
