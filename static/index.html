@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PM 简历优化助手 | AI 驱动的产品经理简历分析工具</title>
+  <meta name="description" content="上传您的简历，粘贴目标职位 JD，AI 即刻为您评分并给出大厂产品经理标准的优化建议，一键生成优化版本。" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ========== 顶部导航 ========== -->
+  <header class="navbar">
+    <div class="navbar-inner">
+      <div class="logo">
+        <div class="logo-icon">✦</div>
+        <span>PM 简历优化助手</span>
+      </div>
+      <div class="nav-badge">AI 驱动 · 大厂标准</div>
+    </div>
+  </header>
+
+  <!-- ========== SECTION 1：上传 ========== -->
+  <section id="sec-upload" class="section active">
+    <div class="container">
+      <div class="hero">
+        <div class="hero-tag">专为产品经理打造</div>
+        <h1 class="hero-title">让你的简历<span class="highlight">脱颖而出</span></h1>
+        <p class="hero-sub">上传简历 · 粘贴 JD · AI 秒级评分 · 一键生成优化版</p>
+      </div>
+
+      <div class="upload-grid">
+        <!-- 上传区域 -->
+        <div class="card upload-card">
+          <div class="card-header">
+            <div class="icon-wrap blue">📄</div>
+            <h2>上传原始简历</h2>
+          </div>
+          <div id="drop-zone" class="drop-zone">
+            <div class="drop-inner">
+              <div class="drop-icon">⬆</div>
+              <p class="drop-label">点击或拖拽简历到此处</p>
+              <p class="drop-hint">支持 PDF、Word 格式（最大 20MB）</p>
+            </div>
+            <input type="file" id="file-input" accept=".pdf,.doc,.docx" hidden />
+          </div>
+          <div id="file-info" class="file-info hidden">
+            <div class="file-icon">📋</div>
+            <div class="file-meta">
+              <span id="file-name" class="file-name"></span>
+              <span id="file-size" class="file-size"></span>
+            </div>
+            <button class="btn-icon" id="btn-remove-file" title="移除">✕</button>
+          </div>
+          <p class="tip">提示：保持原始排版，有助于 AI 准确解析内容</p>
+        </div>
+
+        <!-- JD 输入区域 -->
+        <div class="card jd-card">
+          <div class="card-header">
+            <div class="icon-wrap purple">🎯</div>
+            <h2>目标职位描述（可选）</h2>
+          </div>
+          <textarea
+            id="jd-input"
+            class="jd-textarea"
+            placeholder="粘贴目标职位的 JD 内容，AI 将额外计算岗位匹配度并给出针对性建议&#10;&#10;示例：负责产品生命周期管理，具备数据驱动意识…"
+          ></textarea>
+          <div class="jd-tags">
+            <span class="tag" data-text="用户研究">用户研究</span>
+            <span class="tag" data-text="需求管理">需求管理</span>
+            <span class="tag" data-text="数据分析">数据分析</span>
+            <span class="tag" data-text="跨部门协作">跨部门协作</span>
+            <span class="tag" data-text="敏捷开发">敏捷开发</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="analyze-area">
+        <button id="btn-analyze" class="btn-primary btn-large" disabled>
+          <span class="btn-icon-left">✦</span>
+          一键开启 AI 深度分析
+        </button>
+        <p class="tip-center">您的数据经过加密处理，仅用于生成简历优化方案</p>
+      </div>
+
+      <!-- 特性说明 -->
+      <div class="features-row">
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <h3>一键生成</h3>
+          <p>平均 15 秒生成完整 AI 分析报告</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🔑</div>
+          <h3>精准提取</h3>
+          <p>精准提取 JD 高频需求词汇并植入简历</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">📈</div>
+          <h3>创造机会</h3>
+          <p>针对性优化，显著提升 HR 筛选通过率</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION 2：分析中 ========== -->
+  <section id="sec-analyzing" class="section">
+    <div class="container center-content">
+      <div class="loading-card">
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+          <div class="spinner-core">✦</div>
+        </div>
+        <h2>AI 正在深度分析您的简历…</h2>
+        <p>按大厂产品经理标准逐项评估，请稍候</p>
+        <div class="progress-steps">
+          <div class="step active" id="step-parse">✓ 解析简历内容</div>
+          <div class="step" id="step-score">○ 综合评分计算中</div>
+          <div class="step" id="step-suggest">○ 生成优化建议</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION 3：分析结果 ========== -->
+  <section id="sec-results" class="section">
+    <div class="container">
+      <div class="results-header">
+        <button class="btn-back" id="btn-back-upload">← 重新上传</button>
+        <h1>简历深度诊断报告</h1>
+        <p id="results-sub">AI 已完成评估，请查看分析结果和优化建议</p>
+      </div>
+
+      <!-- 评分卡片 -->
+      <div class="score-grid" id="score-grid">
+        <!-- 质量评分 -->
+        <div class="score-card">
+          <div class="score-label">简历质量评分</div>
+          <div class="circle-wrap">
+            <svg viewBox="0 0 120 120" class="circle-svg">
+              <circle cx="60" cy="60" r="52" class="circle-bg" />
+              <circle cx="60" cy="60" r="52" class="circle-prog" id="prog-resume"
+                      style="stroke:#2563eb" />
+            </svg>
+            <div class="circle-text">
+              <span id="score-resume-val" class="score-num">—</span>
+              <span class="score-unit">/100</span>
+            </div>
+          </div>
+          <p id="score-summary" class="score-desc"></p>
+        </div>
+
+        <!-- 匹配度评分（有 JD 时显示） -->
+        <div class="score-card" id="score-match-card" style="display:none">
+          <div class="score-label">岗位匹配度</div>
+          <div class="circle-wrap">
+            <svg viewBox="0 0 120 120" class="circle-svg">
+              <circle cx="60" cy="60" r="52" class="circle-bg" />
+              <circle cx="60" cy="60" r="52" class="circle-prog" id="prog-match"
+                      style="stroke:#7c3aed" />
+            </svg>
+            <div class="circle-text">
+              <span id="score-match-val" class="score-num match-color">—</span>
+              <span class="score-unit">/100</span>
+            </div>
+          </div>
+          <p class="score-desc">与目标岗位的核心技能契合度</p>
+        </div>
+      </div>
+
+      <!-- 优化建议列表 -->
+      <div class="issues-section">
+        <div class="issues-header">
+          <div class="issues-title-wrap">
+            <h2>AI 优化建议</h2>
+            <span id="issues-count" class="badge">0 条</span>
+          </div>
+          <div class="issues-ctrl">
+            <button class="btn-sm" id="btn-select-all">全选</button>
+            <button class="btn-sm btn-outline" id="btn-deselect-all">取消全选</button>
+          </div>
+        </div>
+
+        <div id="issues-list" class="issues-list"></div>
+      </div>
+
+      <!-- 一键生成按钮 -->
+      <div class="generate-area">
+        <button id="btn-generate" class="btn-primary btn-large">
+          <span class="btn-icon-left">✦</span>
+          采纳建议并一键生成优化简历
+        </button>
+        <p class="tip-center">AI 将根据勾选的建议生成最终版 PDF 和可编辑 Word 文件</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION 4：生成中 ========== -->
+  <section id="sec-generating" class="section">
+    <div class="container center-content">
+      <div class="loading-card">
+        <div class="spinner-wrap">
+          <div class="spinner purple-spinner"></div>
+          <div class="spinner-core">✦</div>
+        </div>
+        <h2>AI 正在生成优化版简历…</h2>
+        <p>正在重写内容、嵌入关键词、生成 PDF 和 Word 文件</p>
+        <div class="progress-steps">
+          <div class="step active">✓ 采纳优化建议</div>
+          <div class="step" id="step-rewrite">○ 重写简历内容中</div>
+          <div class="step" id="step-export">○ 生成 PDF &amp; Word</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SECTION 5：预览 ========== -->
+  <section id="sec-preview" class="section">
+    <div class="container">
+      <div class="preview-header">
+        <button class="btn-back" id="btn-back-results">← 返回分析结果</button>
+        <h1>优化后简历预览</h1>
+      </div>
+
+      <div class="preview-layout">
+        <!-- 左侧操作栏 -->
+        <div class="preview-sidebar">
+          <!-- 得分提升 -->
+          <div class="card score-lift-card">
+            <div class="lift-label">优化得分提升</div>
+            <div class="lift-row">
+              <div class="lift-item">
+                <span class="lift-title">原始分数</span>
+                <span id="orig-score" class="lift-val">—</span>
+              </div>
+              <div class="lift-arrow">→</div>
+              <div class="lift-item">
+                <span class="lift-title">优化后</span>
+                <span id="new-score" class="lift-val blue-val">—</span>
+              </div>
+            </div>
+            <div id="lift-bullets" class="lift-bullets"></div>
+          </div>
+
+          <!-- 下载按钮 -->
+          <div class="card download-card">
+            <a id="btn-dl-pdf" class="btn-primary btn-full" href="#" target="_blank">
+              ⬇ 下载 PDF
+            </a>
+            <a id="btn-dl-word" class="btn-outline-full" href="#" target="_blank">
+              📄 下载 Word
+            </a>
+          </div>
+
+          <!-- 重新上传 -->
+          <button class="btn-outline-full mt-8" id="btn-restart">重新上传简历</button>
+        </div>
+
+        <!-- 右侧预览 -->
+        <div class="preview-main">
+          <div class="resume-paper" id="resume-paper">
+            <!-- 内容由 JS 动态插入 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
