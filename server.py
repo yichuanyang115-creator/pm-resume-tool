@@ -224,37 +224,68 @@ async def analyze_resume(
             """修复 JSON 字符串中未转义的换行符和引号"""
             import re
 
-            # 移除 BOM
-            json_str = json_str.lstrip('\ufeff')
+            # 移除 BOM 和多余空白
+            json_str = json_str.lstrip('\ufeff').strip()
 
-            # 提取 JSON 对象
+            # 强制提取 JSON 对象（去除前后的任何非 JSON 文本）
             start = json_str.find('{')
             end = json_str.rfind('}')
-            if start != -1 and end != -1:
-                json_str = json_str[start:end+1]
-
-            # 使用正则表达式找到所有字符串值（在引号内的内容）
-            # 匹配模式："key": "value" 中的 value 部分
-            def escape_string_value(match):
-                key = match.group(1)
-                value = match.group(2)
-                # 转义未转义的引号和换行符
-                value = value.replace('\\', '\\\\')  # 先转义反斜杠
-                value = value.replace('\n', '\\n')   # 转义换行
-                value = value.replace('\r', '\\r')   # 转义回车
-                value = value.replace('\t', '\\t')   # 转义制表符
-                value = value.replace('"', '\\"')    # 转义引号
-                return f'"{key}": "{value}"'
-
-            # 匹配 "key": "value" 模式，value 可能包含未转义的特殊字符
-            # 注意：这个正则需要小心处理嵌套的引号
-            pattern = r'"([^"]+)":\s*"([^"]*(?:[^"\\]|\\.)*)(?=")'
-
-            try:
-                fixed = re.sub(pattern, escape_string_value, json_str)
-                return fixed
-            except:
+            if start == -1 or end == -1:
                 return json_str
+            json_str = json_str[start:end+1]
+
+            # 尝试直接解析，如果成功就不需要修复
+            try:
+                json.loads(json_str)
+                return json_str
+            except:
+                pass
+
+            # 修复未转义的特殊字符
+            # 策略：逐字符扫描，识别字符串值并转义特殊字符
+            result = []
+            in_string = False
+            in_key = False
+            escape_next = False
+            i = 0
+
+            while i < len(json_str):
+                char = json_str[i]
+
+                if escape_next:
+                    result.append(char)
+                    escape_next = False
+                    i += 1
+                    continue
+
+                if char == '\\':
+                    result.append(char)
+                    escape_next = True
+                    i += 1
+                    continue
+
+                if char == '"':
+                    result.append(char)
+                    in_string = not in_string
+                    i += 1
+                    continue
+
+                if in_string:
+                    # 在字符串内部，转义特殊字符
+                    if char == '\n':
+                        result.append('\\n')
+                    elif char == '\r':
+                        result.append('\\r')
+                    elif char == '\t':
+                        result.append('\\t')
+                    else:
+                        result.append(char)
+                else:
+                    result.append(char)
+
+                i += 1
+
+            return ''.join(result)
 
         # 尝试解析 JSON
         try:
@@ -393,37 +424,68 @@ async def generate_optimized(
             """修复 JSON 字符串中未转义的换行符和引号"""
             import re
 
-            # 移除 BOM
-            json_str = json_str.lstrip('\ufeff')
+            # 移除 BOM 和多余空白
+            json_str = json_str.lstrip('\ufeff').strip()
 
-            # 提取 JSON 对象
+            # 强制提取 JSON 对象（去除前后的任何非 JSON 文本）
             start = json_str.find('{')
             end = json_str.rfind('}')
-            if start != -1 and end != -1:
-                json_str = json_str[start:end+1]
-
-            # 使用正则表达式找到所有字符串值（在引号内的内容）
-            # 匹配模式："key": "value" 中的 value 部分
-            def escape_string_value(match):
-                key = match.group(1)
-                value = match.group(2)
-                # 转义未转义的引号和换行符
-                value = value.replace('\\', '\\\\')  # 先转义反斜杠
-                value = value.replace('\n', '\\n')   # 转义换行
-                value = value.replace('\r', '\\r')   # 转义回车
-                value = value.replace('\t', '\\t')   # 转义制表符
-                value = value.replace('"', '\\"')    # 转义引号
-                return f'"{key}": "{value}"'
-
-            # 匹配 "key": "value" 模式，value 可能包含未转义的特殊字符
-            # 注意：这个正则需要小心处理嵌套的引号
-            pattern = r'"([^"]+)":\s*"([^"]*(?:[^"\\]|\\.)*)(?=")'
-
-            try:
-                fixed = re.sub(pattern, escape_string_value, json_str)
-                return fixed
-            except:
+            if start == -1 or end == -1:
                 return json_str
+            json_str = json_str[start:end+1]
+
+            # 尝试直接解析，如果成功就不需要修复
+            try:
+                json.loads(json_str)
+                return json_str
+            except:
+                pass
+
+            # 修复未转义的特殊字符
+            # 策略：逐字符扫描，识别字符串值并转义特殊字符
+            result = []
+            in_string = False
+            in_key = False
+            escape_next = False
+            i = 0
+
+            while i < len(json_str):
+                char = json_str[i]
+
+                if escape_next:
+                    result.append(char)
+                    escape_next = False
+                    i += 1
+                    continue
+
+                if char == '\\':
+                    result.append(char)
+                    escape_next = True
+                    i += 1
+                    continue
+
+                if char == '"':
+                    result.append(char)
+                    in_string = not in_string
+                    i += 1
+                    continue
+
+                if in_string:
+                    # 在字符串内部，转义特殊字符
+                    if char == '\n':
+                        result.append('\\n')
+                    elif char == '\r':
+                        result.append('\\r')
+                    elif char == '\t':
+                        result.append('\\t')
+                    else:
+                        result.append(char)
+                else:
+                    result.append(char)
+
+                i += 1
+
+            return ''.join(result)
 
         # 尝试解析 JSON
         try:
