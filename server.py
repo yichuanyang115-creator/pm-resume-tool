@@ -219,19 +219,49 @@ async def analyze_resume(
             raw = raw.rsplit("```", 1)[0]
         raw = raw.strip()
 
+        # 智能修复 JSON 字符串中的未转义字符
+        def fix_json_string(json_str):
+            """修复 JSON 字符串中未转义的换行符和引号"""
+            import re
+
+            # 移除 BOM
+            json_str = json_str.lstrip('\ufeff')
+
+            # 提取 JSON 对象
+            start = json_str.find('{')
+            end = json_str.rfind('}')
+            if start != -1 and end != -1:
+                json_str = json_str[start:end+1]
+
+            # 使用正则表达式找到所有字符串值（在引号内的内容）
+            # 匹配模式："key": "value" 中的 value 部分
+            def escape_string_value(match):
+                key = match.group(1)
+                value = match.group(2)
+                # 转义未转义的引号和换行符
+                value = value.replace('\\', '\\\\')  # 先转义反斜杠
+                value = value.replace('\n', '\\n')   # 转义换行
+                value = value.replace('\r', '\\r')   # 转义回车
+                value = value.replace('\t', '\\t')   # 转义制表符
+                value = value.replace('"', '\\"')    # 转义引号
+                return f'"{key}": "{value}"'
+
+            # 匹配 "key": "value" 模式，value 可能包含未转义的特殊字符
+            # 注意：这个正则需要小心处理嵌套的引号
+            pattern = r'"([^"]+)":\s*"([^"]*(?:[^"\\]|\\.)*)(?=")'
+
+            try:
+                fixed = re.sub(pattern, escape_string_value, json_str)
+                return fixed
+            except:
+                return json_str
+
         # 尝试解析 JSON
         try:
             result = json.loads(raw)
         except json.JSONDecodeError as e:
-            # 如果解析失败，尝试修复常见问题
             print(f"首次解析失败，尝试修复。错误：{e}")
-            # 1. 移除可能的 BOM 标记
-            raw = raw.lstrip('\ufeff')
-            # 2. 尝试找到第一个 { 和最后一个 }
-            start = raw.find('{')
-            end = raw.rfind('}')
-            if start != -1 and end != -1:
-                raw = raw[start:end+1]
+            raw = fix_json_string(raw)
             print(f"修复后内容（前500字符）：\n{raw[:500]}")
             result = json.loads(raw)
 
@@ -358,17 +388,49 @@ async def generate_optimized(
             raw = raw.rsplit("```", 1)[0]
         raw = raw.strip()
 
+        # 智能修复 JSON 字符串中的未转义字符
+        def fix_json_string(json_str):
+            """修复 JSON 字符串中未转义的换行符和引号"""
+            import re
+
+            # 移除 BOM
+            json_str = json_str.lstrip('\ufeff')
+
+            # 提取 JSON 对象
+            start = json_str.find('{')
+            end = json_str.rfind('}')
+            if start != -1 and end != -1:
+                json_str = json_str[start:end+1]
+
+            # 使用正则表达式找到所有字符串值（在引号内的内容）
+            # 匹配模式："key": "value" 中的 value 部分
+            def escape_string_value(match):
+                key = match.group(1)
+                value = match.group(2)
+                # 转义未转义的引号和换行符
+                value = value.replace('\\', '\\\\')  # 先转义反斜杠
+                value = value.replace('\n', '\\n')   # 转义换行
+                value = value.replace('\r', '\\r')   # 转义回车
+                value = value.replace('\t', '\\t')   # 转义制表符
+                value = value.replace('"', '\\"')    # 转义引号
+                return f'"{key}": "{value}"'
+
+            # 匹配 "key": "value" 模式，value 可能包含未转义的特殊字符
+            # 注意：这个正则需要小心处理嵌套的引号
+            pattern = r'"([^"]+)":\s*"([^"]*(?:[^"\\]|\\.)*)(?=")'
+
+            try:
+                fixed = re.sub(pattern, escape_string_value, json_str)
+                return fixed
+            except:
+                return json_str
+
         # 尝试解析 JSON
         try:
             resume_data = json.loads(raw)
         except json.JSONDecodeError as e:
-            # 如果解析失败，尝试修复
             print(f"首次解析失败，尝试修复。错误：{e}")
-            raw = raw.lstrip('\ufeff')
-            start = raw.find('{')
-            end = raw.rfind('}')
-            if start != -1 and end != -1:
-                raw = raw[start:end+1]
+            raw = fix_json_string(raw)
             print(f"修复后内容（前500字符）：\n{raw[:500]}")
             resume_data = json.loads(raw)
 
