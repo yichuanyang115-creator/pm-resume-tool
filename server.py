@@ -146,7 +146,7 @@ async def analyze_resume(
 
     prompt = f"""你是一位有 10 年以上互联网大厂（阿里、腾讯、字节、美团）招聘经验的产品经理简历评估专家。
 
-请对以下简历进行专业评估，并严格以合法 JSON 格式返回结果，不要输出任何 markdown 代码块标记。
+请对以下简历进行专业评估，并严格以合法 JSON 格式返回结果。
 
 【待评估简历】
 {resume_text[:3500]}
@@ -186,11 +186,13 @@ async def analyze_resume(
   ]
 }}
 
-注意：
+【重要约束】
 - issues 数组包含 4~6 个最重要的优化点
 - priority 枚举：high / medium / low
-- 所有文字使用中文
-- 只返回 JSON，不要任何其他文字"""
+- 所有文字使用中文，字符串中的引号必须转义为 \\"
+- 字符串中不要包含未转义的换行符，使用 \\n 代替
+- 只返回纯 JSON 对象，不要包含 ```json 等 markdown 标记
+- 不要在 JSON 外添加任何解释文字"""
 
     try:
         client = ZhipuAI(api_key=API_KEY)
@@ -204,17 +206,34 @@ async def analyze_resume(
 
         # 清理 markdown 代码围栏
         if raw.startswith("```"):
-            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+            lines = raw.split("\n")
+            # 移除第一行的 ```json 或 ```
+            raw = "\n".join(lines[1:])
         if raw.endswith("```"):
             raw = raw.rsplit("```", 1)[0]
         raw = raw.strip()
 
-        result = json.loads(raw)
+        # 尝试解析 JSON
+        try:
+            result = json.loads(raw)
+        except json.JSONDecodeError as e:
+            # 如果解析失败，尝试修复常见问题
+            # 1. 移除可能的 BOM 标记
+            raw = raw.lstrip('\ufeff')
+            # 2. 尝试找到第一个 { 和最后一个 }
+            start = raw.find('{')
+            end = raw.rfind('}')
+            if start != -1 and end != -1:
+                raw = raw[start:end+1]
+            result = json.loads(raw)
+
         result["file_id"] = file_id
         result["has_jd"]  = has_jd
         return result
 
     except json.JSONDecodeError as e:
+        # 记录原始返回内容用于调试
+        print(f"JSON 解析失败，原始内容：\n{raw[:500]}")
         raise HTTPException(status_code=500, detail=f"AI 返回格式异常，请重试：{e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"分析失败：{e}")
@@ -244,7 +263,7 @@ async def generate_optimized(
 【需要采纳的优化点】
 {issues_desc}
 
-请生成优化后的完整简历，严格以合法 JSON 格式返回，不含任何 markdown 标记。
+请生成优化后的完整简历，严格以合法 JSON 格式返回。
 
 【返回 JSON 格式】
 {{
@@ -294,13 +313,19 @@ async def generate_optimized(
   }}
 }}
 
-优化要求：
+【优化要求】
 1. 所有工作/项目成就必须加入具体数据指标（百分比、倍数、金额等）
 2. 使用 STAR 法则重写工作经历条目
 3. 突出 PM 核心能力（数据驱动、需求管理、跨团队协作）
 4. 语言风格简洁专业，符合大厂 JD 语境
 5. 只做表述优化，不编造不存在的经历
-6. 全部使用中文"""
+6. 全部使用中文
+
+【重要约束】
+- 字符串中的引号必须转义为 \\"
+- 字符串中不要包含未转义的换行符，使用 \\n 代替
+- 只返回纯 JSON 对象，不要包含 ```json 等 markdown 标记
+- 不要在 JSON 外添加任何解释文字"""
 
     try:
         client = ZhipuAI(api_key=API_KEY)
@@ -312,13 +337,25 @@ async def generate_optimized(
         )
         raw = resp.choices[0].message.content.strip()
 
+        # 清理 markdown 代码围栏
         if raw.startswith("```"):
-            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+            lines = raw.split("\n")
+            raw = "\n".join(lines[1:])
         if raw.endswith("```"):
             raw = raw.rsplit("```", 1)[0]
         raw = raw.strip()
 
-        resume_data = json.loads(raw)
+        # 尝试解析 JSON
+        try:
+            resume_data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            # 如果解析失败，尝试修复
+            raw = raw.lstrip('\ufeff')
+            start = raw.find('{')
+            end = raw.rfind('}')
+            if start != -1 and end != -1:
+                raw = raw[start:end+1]
+            resume_data = json.loads(raw)
 
         # 生成 PDF
         pdf_path  = OUTPUT_DIR / f"{file_id}_optimized.pdf"
@@ -334,6 +371,7 @@ async def generate_optimized(
         }
 
     except json.JSONDecodeError as e:
+        print(f"JSON 解析失败，原始内容：\n{raw[:500]}")
         raise HTTPException(status_code=500, detail=f"AI 返回格式异常：{e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"生成失败：{e}")
