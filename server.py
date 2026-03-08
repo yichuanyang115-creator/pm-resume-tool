@@ -194,6 +194,7 @@ async def analyze_resume(
 - 只返回纯 JSON 对象，不要包含 ```json 等 markdown 标记
 - 不要在 JSON 外添加任何解释文字"""
 
+    raw = ""
     try:
         client = ZhipuAI(api_key=API_KEY)
         resp = client.chat.completions.create(
@@ -203,6 +204,9 @@ async def analyze_resume(
             max_tokens=3000,
         )
         raw = resp.choices[0].message.content.strip()
+
+        # 记录原始返回（调试用）
+        print(f"AI 原始返回（前500字符）：\n{raw[:500]}")
 
         # 清理 markdown 代码围栏
         if raw.startswith("```"):
@@ -218,6 +222,7 @@ async def analyze_resume(
             result = json.loads(raw)
         except json.JSONDecodeError as e:
             # 如果解析失败，尝试修复常见问题
+            print(f"首次解析失败，尝试修复。错误：{e}")
             # 1. 移除可能的 BOM 标记
             raw = raw.lstrip('\ufeff')
             # 2. 尝试找到第一个 { 和最后一个 }
@@ -225,6 +230,7 @@ async def analyze_resume(
             end = raw.rfind('}')
             if start != -1 and end != -1:
                 raw = raw[start:end+1]
+            print(f"修复后内容（前500字符）：\n{raw[:500]}")
             result = json.loads(raw)
 
         result["file_id"] = file_id
@@ -233,10 +239,11 @@ async def analyze_resume(
 
     except json.JSONDecodeError as e:
         # 记录原始返回内容用于调试
-        print(f"JSON 解析失败，原始内容：\n{raw[:500]}")
-        raise HTTPException(status_code=500, detail=f"AI 返回格式异常，请重试：{e}")
+        print(f"JSON 解析最终失败，原始内容：\n{raw[:1000]}")
+        raise HTTPException(status_code=500, detail=f"AI 返回格式异常，请重试：{str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"分析失败：{e}")
+        print(f"其他错误：{str(e)}")
+        raise HTTPException(status_code=500, detail=f"分析失败：{str(e)}")
 
 
 # ────────────────────────────────────────
@@ -327,6 +334,7 @@ async def generate_optimized(
 - 只返回纯 JSON 对象，不要包含 ```json 等 markdown 标记
 - 不要在 JSON 外添加任何解释文字"""
 
+    raw = ""
     try:
         client = ZhipuAI(api_key=API_KEY)
         resp = client.chat.completions.create(
@@ -336,6 +344,9 @@ async def generate_optimized(
             max_tokens=4000,
         )
         raw = resp.choices[0].message.content.strip()
+
+        # 记录原始返回（调试用）
+        print(f"AI 原始返回（前500字符）：\n{raw[:500]}")
 
         # 清理 markdown 代码围栏
         if raw.startswith("```"):
@@ -350,11 +361,13 @@ async def generate_optimized(
             resume_data = json.loads(raw)
         except json.JSONDecodeError as e:
             # 如果解析失败，尝试修复
+            print(f"首次解析失败，尝试修复。错误：{e}")
             raw = raw.lstrip('\ufeff')
             start = raw.find('{')
             end = raw.rfind('}')
             if start != -1 and end != -1:
                 raw = raw[start:end+1]
+            print(f"修复后内容（前500字符）：\n{raw[:500]}")
             resume_data = json.loads(raw)
 
         # 生成 PDF
@@ -371,10 +384,11 @@ async def generate_optimized(
         }
 
     except json.JSONDecodeError as e:
-        print(f"JSON 解析失败，原始内容：\n{raw[:500]}")
-        raise HTTPException(status_code=500, detail=f"AI 返回格式异常：{e}")
+        print(f"JSON 解析最终失败，原始内容：\n{raw[:1000]}")
+        raise HTTPException(status_code=500, detail=f"AI 返回格式异常：{str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"生成失败：{e}")
+        print(f"其他错误：{str(e)}")
+        raise HTTPException(status_code=500, detail=f"生成失败：{str(e)}")
 
 
 # ────────────────────────────────────────
