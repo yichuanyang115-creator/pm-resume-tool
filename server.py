@@ -189,10 +189,12 @@ async def analyze_resume(
 【重要约束】
 - issues 数组包含 4~6 个最重要的优化点
 - priority 枚举：high / medium / low
-- 所有文字使用中文，字符串中的引号必须转义为 \\"
-- 字符串中不要包含未转义的换行符，使用 \\n 代替
+- 所有文字使用中文
+- **严格要求**：JSON 字符串中的所有引号必须转义为 \\"，所有换行必须转义为 \\n
+- description 和 suggestion 字段必须是单行字符串，不能包含实际换行符
 - 只返回纯 JSON 对象，不要包含 ```json 等 markdown 标记
-- 不要在 JSON 外添加任何解释文字"""
+- 不要在 JSON 外添加任何解释文字
+- 确保返回的是完整的、可解析的 JSON 对象"""
 
     raw = ""
     try:
